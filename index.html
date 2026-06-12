@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>經典霓虹貪食蛇 - 五關挑戰</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-green: #00ff66;
+            --neon-blue: #00e5ff;
+            --neon-pink: #ff007f;
+            --neon-gold: #ffd700;
+            --bg-dark: #0a0b10;
+            --panel-bg: #141622;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #fff;
+            font-family: 'Share Tech Mono', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        /* 霓虹文字特效 */
+        .neon-text {
+            font-family: 'Press Start 2P', cursive;
+            color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green), 0 0 10px var(--neon-green), 0 0 20px var(--neon-green);
+            text-align: center;
+            font-size: 22px;
+            margin: 15px 0;
+            line-height: 1.5;
+        }
+
+        .neon-blue {
+            color: var(--neon-blue);
+            text-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+        }
+
+        /* 開始/首頁畫面 */
+        #start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--panel-bg);
+            border: 3px solid var(--neon-green);
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.25);
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 500px;
+            width: 100%;
+            transition: all 0.5s ease;
+        }
+
+        .intro-box {
+            background: rgba(5, 6, 10, 0.6);
+            border-left: 4px solid var(--neon-blue);
+            padding: 12px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .intro-box h3 {
+            margin: 0 0 8px 0;
+            color: var(--neon-blue);
+            font-size: 16px;
+        }
+
+        .intro-box p {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #a0aec0;
+            line-height: 1.4;
+        }
+
+        /* 排行榜區塊 */
+        .start-leaderboard {
+            width: 100%;
+            background: rgba(5, 6, 10, 0.8);
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .start-leaderboard h3 {
+            text-align: center;
+            margin: 0 0 10px 0;
+            color: var(--neon-gold);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+        }
+
+        .start-leaderboard ol {
+            padding-left: 15px;
+            margin: 0;
+        }
+
+        .start-leaderboard li {
+            font-size: 16px;
+            margin: 6px 0;
+            color: #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 霓虹大按鈕 */
+        .btn-neon {
+            background: transparent;
+            color: var(--neon-green);
+            border: 2px solid var(--neon-green);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            padding: 12px 30px;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            outline: none;
+            text-shadow: 0 0 5px var(--neon-green);
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
+            animation: pulse 1.5s infinite;
+        }
+
+        .btn-neon:hover {
+            background: var(--neon-green);
+            color: #000;
+            text-shadow: none;
+            box-shadow: 0 0 20px var(--neon-green);
+            transform: scale(1.05);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        /* 實際遊戲畫面區 */
+        #game-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 650px;
+        }
+
+        #game-layout {
+            display: flex;
+            gap: 20px;
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #2d3748;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        #canvas-wrapper {
+            position: relative;
+            width: 320px;
+            height: 320px;
+        }
+
+        canvas {
+            border: 3px solid var(--neon-green);
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+            background-color: #050508;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 側邊狀態面板 */
+        #status-panel {
+            width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .info-box {
+            background: rgba(5, 6, 10, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #2d3748;
+        }
+
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: var(--neon-blue);
+            border-bottom: 2px solid #2d3748;
+            padding-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .info-item {
+            font-size: 18px;
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .info-item span:first-child {
+            color: #a0aec0;
+        }
+
+        .info-item span:last-child {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        /* 虛擬方向鍵（手機觸控） */
+        #touch-controls {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 15px;
+            gap: 5px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-control {
+            width: 55px;
+            height: 55px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid var(--neon-blue);
+            border-radius: 50%;
+            color: var(--neon-blue);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+            touch-action: manipulation;
+        }
+
+        .btn-control:active {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        /* 遊戲內彈出視窗 */
+        .modal {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 6, 10, 0.95);
+            color: white;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .modal h2 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .modal p {
+            font-size: 16px;
+            color: #cbd5e1;
+            margin: 8px 0 15px 0;
+            line-height: 1.5;
+        }
+
+        /* 通用按鈕 */
+        .btn-general {
+            background-color: var(--neon-blue);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-family: 'Share Tech Mono', sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-general:hover {
+            background-color: var(--neon-green);
+            box-shadow: 0 0 15px var(--neon-green);
+        }
+
+        input[type="text"] {
+            background: #1e2238;
+            border: 2px solid #2d3748;
+            color: #fff;
+            padding: 8px;
+            font-size: 16px;
+            font-family: 'Share Tech Mono', sans-serif;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+            outline: none;
+            width: 80%;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 8px var(--neon-green);
+        }
+
+        /* 響應式調整 */
+        @media (max-width: 580px) {
+            #game-layout {
+                flex-direction: column;
+                align-items: center;
+            }
+            #status-panel {
+                width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .info-box {
+                flex: 1;
+                min-width: 140px;
+            }
+            #touch-controls {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <div class="neon-text">SNAKE<br><span class="neon-blue">CHALLENGE</span></div>
+        
+        <div class="intro-box">
+            <h3>🎮 遊戲規則</h3>
+            <p>1. 使用鍵盤 <b>方向鍵</b> 或 <b>螢幕虛擬鍵</b> 操控。</p>
+            <p>2. 吞食地圖上的 <b>金色寶石</b> 獲得分數並增長身體。</p>
+            <p>3. 每一關必須<b>吃完地圖內所有寶石</b>才能晉級。</p>
+            <p>4. 共有 <b>5 個關卡</b>，越往後寶石越多、速度越快！</p>
+            <p>5. 撞到邊界或自己的身體，遊戲即告結束。</p>
+        </div>
+
+        <div class="start-leaderboard">
+            <h3>🏆 榮譽殿堂 (TOP 5)</h3>
+            <ol id="start-leaderboard-list">
+                <li><span>1. 暫無資料</span> <span>-</span></li>
+                <li><span>2. 暫無資料</span> <span>-</span></li>
+                <li><span>3. 暫無資料</span> <span>-</span></li>
+                <li><span>4. 暫無資料</span> <span>-</span></li>
+                <li><span>5. 暫無資料</span> <span>-</span></li>
+            </ol>
+        </div>
+
+        <button class="btn-neon" onclick="switchToGameScreen()">START GAME</button>
+    </div>
+
+    <div id="game-screen">
+        <h1 class="neon-text" style="font-size: 16px; margin: 10px 0;">STAGE IN PROGRESS</h1>
+        
+        <div id="game-layout">
+            <div id="canvas-wrapper">
+                <canvas id="gameCanvas" width="320" height="320"></canvas>
+                
+                <div id="gameModal" class="modal">
+                    <h2 id="modalTitle" style="color: var(--neon-green);">STAGE CLEAR!</h2>
+                    <p id="modalText">準備好挑戰下一關了嗎？</p>
+                    
+                    <div id="highScoreInputZone" style="display: none;">
+                        <p style="color: var(--neon-gold);">榮登排行榜！請輸入你的名字：</p>
+                        <input type="text" id="playerName" maxlength="8" placeholder="輸入名字..."><br>
+                    </div>
+                    
+                    <button id="modalBtn" class="btn-general" onclick="handleModalClick()">繼續</button>
+                </div>
+            </div>
+
+            <div id="status-panel">
+                <div class="info-box">
+                    <h3>STATUS</h3>
+                    <div class="info-item"><span>Level</span> <span id="level" style="color: var(--neon-blue);">1 / 5</span></div>
+                    <div class="info-item"><span>Score</span> <span id="score" style="color: var(--neon-green);">0</span></div>
+                    <div class="info-item"><span>Time</span> <span id="timer" style="color: var(--neon-gold);">0s</span></div>
+                    <div class="info-item"><span>Gems</span> <span id="gemsLeft" style="color: var(--neon-pink);">3</span></div>
+                </div>
+
+                <div class="info-box" style="text-align: center; background: transparent; border: none; padding: 0;">
+                    <p style="font-size: 13px; color: #64748b; margin: 0;">ESC 鍵可隨時退回主選單</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="touch-controls">
+            <div class="control-row">
+                <div class="btn-control" onclick="simulateKey(38)">▲</div>
+            </div>
+            <div class="control-row">
+                <div class="btn-control" onclick="simulateKey(37)">◀</div>
+                <div class="btn-control" style="opacity: 0; pointer-events: none;"></div>
+                <div class="btn-control" onclick="simulateKey(39)">▶</div>
+            </div>
+            <div class="control-row">
+                <div class="btn-control" onclick="simulateKey(40)">▼</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const gridSize = 16;
+        const tileCount = canvas.width / gridSize;
+
+        let snake = [];
+        let dx = gridSize;
+        let dy = 0;
+        let gems = [];
+        let score = 0;
+        let level = 1;
+        let timeElapsed = 0;
+        let gemsRequiredToWin = 0;
+
+        let gameInterval = null;
+        let timerInterval = null;
+        const baseSpeed = 130; 
+
+        let currentPlayState = 'MODAL_OPEN';
+        let subState = 'START'; 
+
+        window.onload = function() {
+            updateLeaderboardViews();
+        };
+
+        document.addEventListener("keydown", handleKeyDown);
+
+        function handleKeyDown(event) {
+            const keyPressed = event.keyCode;
+
+            if (keyPressed === 27) { 
+                exitToStartScreen();
+                return;
+            }
+
+            if (currentPlayState !== 'PLAYING') return;
+
+            const goingUp = dy === -gridSize;
+            const goingDown = dy === gridSize;
+            const goingRight = dx === gridSize;
+            const goingLeft = dx === -gridSize;
+
+            if (keyPressed === 37 && !goingRight) { dx = -gridSize; dy = 0; }
+            if (keyPressed === 38 && !goingDown) { dx = 0; dy = -gridSize; }
+            if (keyPressed === 39 && !goingLeft) { dx = gridSize; dy = 0; }
+            if (keyPressed === 40 && !goingUp) { dx = 0; dy = gridSize; }
+        }
+
+        function simulateKey(code) {
+            handleKeyDown({ keyCode: code });
+        }
+
+        function switchToGameScreen() {
+            document.getElementById("start-screen").style.display = "none";
+            document.getElementById("game-screen").style.display = "flex";
+            
+            score = 0;
+            timeElapsed = 0;
+            level = 1;
+            document.getElementById("timer").innerText = "0s";
+            
+            initLevel(1);
+            startLoop();
+            currentPlayState = 'PLAYING';
+        }
+
+        function exitToStartScreen() {
+            stopLoop();
+            document.getElementById("game-screen").style.display = "none";
+            document.getElementById("start-screen").style.display = "flex";
+            document.getElementById("gameModal").style.display = "none";
+            updateLeaderboardViews();
+        }
+
+        function initLevel(lvl) {
+            level = lvl;
+            gemsRequiredToWin = 3 + (level - 1) * 2; 
+
+            snake = [
+                {x: 8 * gridSize, y: 10 * gridSize},
+                {x: 7 * gridSize, y: 10 * gridSize},
+                {x: 6 * gridSize, y: 10 * gridSize}
+            ];
+            dx = gridSize;
+            dy = 0;
+
+            gems = [];
+            for (let i = 0; i < gemsRequiredToWin; i++) {
+                gems.push(getRandomFoodPosition());
+            }
+
+            updateUI();
+        }
+
+        function startLoop() {
+            if (gameInterval) clearInterval(gameInterval);
+            if (timerInterval) clearInterval(timerInterval);
+
+            let currentSpeed = baseSpeed - (level * 10);
+
+            gameInterval = setInterval(gameLoop, currentSpeed);
+            timerInterval = setInterval(() => {
+                timeElapsed++;
+                document.getElementById("timer").innerText = timeElapsed + "s";
+            }, 1000);
+        }
+
+        function stopLoop() {
+            clearInterval(gameInterval);
+            clearInterval(timerInterval);
+        }
+
+        function gameLoop() {
+            if (hasGameEnded()) {
+                stopLoop();
+                currentPlayState = 'MODAL_OPEN';
+                subState = 'GAME_OVER';
+                showModal('GAME_OVER');
+                return;
+            }
+
+            moveSnake();
+            checkFoodCollision();
+            drawGrid();
+        }
+
+        function drawGrid() {
+            ctx.fillStyle = "#050508";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            snake.forEach((part, index) => {
+                if (index === 0) {
+                    ctx.fillStyle = '#00ff66'; 
+                } else {
+                    ctx.fillStyle = '#00a344'; 
+                }
+                ctx.strokeStyle = '#050508';
+                ctx.fillRect(part.x, part.y, gridSize, gridSize);
+                ctx.strokeRect(part.x, part.y, gridSize, gridSize);
+            });
+
+            gems.forEach(gem => {
+                ctx.fillStyle = '#ffd700';
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur = 8;
+                
+                ctx.beginPath();
+                let centerX = gem.x + gridSize / 2;
+                let centerY = gem.y + gridSize / 2;
+                let radius = gridSize / 2 - 2;
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0; 
+            });
+        }
+
+        function moveSnake() {
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            snake.unshift(head);
+            snake.pop(); 
+        }
+
+        function checkFoodCollision() {
+            for (let i = 0; i < gems.length; i++) {
+                if (snake[0].x === gems[i].x && snake[0].y === gems[i].y) {
+                    score += 10 * level; 
+                    
+                    snake.push({ ...snake[snake.length - 1] });
+                    gems.splice(i, 1);
+                    
+                    if (gems.length === 0) {
+                        stopLoop();
+                        currentPlayState = 'MODAL_OPEN';
+                        if (level < 5) {
+                            subState = 'NEXT_LEVEL';
+                            showModal('NEXT_LEVEL');
+                        } else {
+                            subState = 'WIN_ALL';
+                            showModal('WIN_ALL');
+                        }
+                    }
+                    
+                    updateUI();
+                    break;
+                }
+            }
+        }
+
+        function hasGameEnded() {
+            if (snake[0].x < 0 || snake[0].x >= canvas.width || snake[0].y < 0 || snake[0].y >= canvas.height) {
+                return true;
+            }
+            for (let i = 1; i < snake.length; i++) {
+                if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
+            }
+            return false;
+        }
+
+        function getRandomFoodPosition() {
+            let foodX, foodY;
+            while (true) {
+                foodX = Math.floor(Math.random() * tileCount) * gridSize;
+                foodY = Math.floor(Math.random() * tileCount) * gridSize;
+                
+                let onSnake = snake.some(part => part.x === foodX && part.y === foodY);
+                let onGems = gems.some(gem => gem.x === foodX && gem.y === foodY);
+
+                if (!onSnake && !onGems) break;
+            }
+            return {x: foodX, y: foodY};
+        }
+
+        function updateUI() {
+            document.getElementById("score").innerText = score;
+            document.getElementById("level").innerText = level + " / 5";
+            document.getElementById("gemsLeft").innerText = gems.length;
+        }
+
+        function showModal(type) {
+            const modal = document.getElementById("gameModal");
+            const title = document.getElementById("modalTitle");
+            const text = document.getElementById("modalText");
+            const btn = document.getElementById("modalBtn");
+            const inputZone = document.getElementById("highScoreInputZone");
+
+            modal.style.display = "flex";
+            inputZone.style.display = "none";
+
+            if (type === 'NEXT_LEVEL') {
+                title.innerText = "STAGE CLEAR!";
+                title.style.color = "var(--neon-green)";
+                text.innerText = `恭喜通過第 ${level} 關！\n當前累計積分: ${score} 分`;
+                btn.innerText = `進入第 ${level + 1} 關`;
+            } else if (type === 'GAME_OVER') {
+                title.innerText = "GAME OVER";
+                title.style.color = "var(--neon-pink)";
+                text.innerText = `撞到了！挑戰失敗。\n最終得分: ${score} 分`;
+                
+                if (checkIsHighScore(score)) {
+                    inputZone.style.display = "block";
+                    btn.innerText = "登入排行並回首頁";
+                } else {
+                    btn.innerText = "回到首頁";
+                }
+            } else if (type === 'WIN_ALL') {
+                title.innerText = "CONGRATULATIONS!";
+                title.style.color = "var(--neon-gold)";
+                text.innerText = `你成功征服了全部 5 個關卡！🏆\n總花費時間: ${timeElapsed} 秒\n最終分數: ${score} 分`;
+                
+                if (checkIsHighScore(score)) {
+                    inputZone.style.display = "block";
+                    btn.innerText = "登入排行並回首頁";
+                } else {
+                    btn.innerText = "回到首頁";
+                }
+            }
+        }
+
+        function handleModalClick() {
+            const modal = document.getElementById("gameModal");
+            const nameInput = document.getElementById("playerName");
+
+            if (document.getElementById("highScoreInputZone").style.display === "block") {
+                let name = nameInput.value.trim() || "玩家壹";
+                saveScore(name, score);
+                nameInput.value = ""; 
+            }
+
+            modal.style.display = "none";
+
+            if (subState === 'NEXT_LEVEL') {
+                initLevel(level + 1);
+                startLoop();
+                currentPlayState = 'PLAYING';
+            } else if (subState === 'GAME_OVER' || subState === 'WIN_ALL') {
+                exitToStartScreen();
+            }
+        }
+
+        function getLeaderboard() {
+            let board = localStorage.getItem("snake_challenge_leaderboard");
+            return board ? JSON.parse(board) : [];
+        }
+
+        function checkIsHighScore(currentScore) {
+            if (currentScore === 0) return false;
+            let board = getLeaderboard();
+            if (board.length < 5) return true;
+            return currentScore > board[board.length - 1].score;
+        }
+
+        function saveScore(name, currentScore) {
+            let board = getLeaderboard();
+            board.push({
+                name: name, 
+                score: currentScore, 
+                date: new Date().toLocaleDateString()
+            });
+            board.sort((a, b) => b.score - a.score);
+            board = board.slice(0, 5);
+            localStorage.setItem("snake_challenge_leaderboard", JSON.stringify(board));
+            updateLeaderboardViews();
+        }
+
+        function updateLeaderboardViews() {
+            let board = getLeaderboard();
+            const startListItems = document.querySelectorAll("#start-leaderboard-list li");
+            
+            for (let i = 0; i < 5; i++) {
+                if (board[i]) {
+                    startListItems[i].innerHTML = `<span>${i + 1}. ${board[i].name}</span> <span>${board[i].score} PTS</span>`;
+                } else {
+                    startListItems[i].innerHTML = `<span>${i + 1}. 暫無資料</span> <span>-</span>`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
